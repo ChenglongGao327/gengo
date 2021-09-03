@@ -8,8 +8,8 @@ build:
 	@go build -o /tmp/$(TOOL)
 
 test_rules:
-	  /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/a)
-	! /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/b)
+	 /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/a)
+	  /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/b)
 	  /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/c)
 	! /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/nested)
 	  /tmp/$(TOOL) --logtostderr --v=4 -i $$(go list ./tests/rules/nested/nested)

@@ -122,11 +122,14 @@ func (b *Builder) AddBuildTags(tags ...string) {
 // e.g. test files and files for other platforms-- there is quite a bit of
 // logic of that nature in the build package.
 func (b *Builder) importBuildPackage(dir string) (*build.Package, error) {
+	klog.V(5).Infof("importBuildPackage dir=== %s", dir)
 	if buildPkg, ok := b.buildPackages[dir]; ok {
 		return buildPkg, nil
 	}
 	// This validates the `package foo // github.com/bar/foo` comments.
 	buildPkg, err := b.importWithMode(dir, build.ImportComment)
+	klog.Infof("===find ImportComment==%s",err)
+
 	if err != nil {
 		if _, ok := err.(*build.NoGoError); !ok {
 			return nil, fmt.Errorf("unable to import %q: %v", dir, err)
@@ -135,6 +138,7 @@ func (b *Builder) importBuildPackage(dir string) (*build.Package, error) {
 	if buildPkg == nil {
 		// Might be an empty directory. Try to just find the dir.
 		buildPkg, err = b.importWithMode(dir, build.FindOnly)
+		klog.Infof("===find only==%s",err)
 		if err != nil {
 			return nil, err
 		}
@@ -153,7 +157,7 @@ func (b *Builder) importBuildPackage(dir string) (*build.Package, error) {
 		klog.V(5).Infof("saving buildPackage %s", canonicalPackage)
 		b.buildPackages[string(canonicalPackage)] = buildPkg
 	}
-
+	klog.V(5).Infof("importBuildPackage buildPkg=== %+v", buildPkg)
 	return buildPkg, nil
 }
 
@@ -178,6 +182,9 @@ func (b *Builder) AddFileForTest(pkg string, path string, src []byte) error {
 // flag indicates whether this file was user-requested or just from following
 // the import graph.
 func (b *Builder) addFile(pkgPath importPathString, path string, src []byte, userRequested bool) error {
+	klog.Infof("add file===%+v",pkgPath)
+	klog.Infof("b.parsed===%+v",b.parsed)
+
 	for _, p := range b.parsed[pkgPath] {
 		if path == p.name {
 			klog.V(5).Infof("addFile %s %s already parsed, skipping", pkgPath, path)
@@ -224,6 +231,8 @@ func (b *Builder) AddDir(dir string) error {
 // subdirectories; it returns an error only if the path couldn't be resolved;
 // any directories recursed into without go source are ignored.
 func (b *Builder) AddDirRecursive(dir string) error {
+	klog.Infof("add dir ===%s",dir)
+
 	// Add the root.
 	if _, err := b.importPackage(dir, true); err != nil {
 		klog.Warningf("Ignoring directory %v: %v", dir, err)
@@ -231,6 +240,9 @@ func (b *Builder) AddDirRecursive(dir string) error {
 
 	// filepath.Walk does not follow symlinks. We therefore evaluate symlinks and use that with
 	// filepath.Walk.
+	klog.Infof("build package===%+v",b.buildPackages)
+	klog.Infof("add root dir ===%+v",b.buildPackages[dir])
+	klog.Infof("add root===%s",b.buildPackages[dir].Dir)
 	realPath, err := filepath.EvalSymlinks(b.buildPackages[dir].Dir)
 	if err != nil {
 		return err
@@ -320,6 +332,7 @@ func (b *Builder) addDir(dir string, userRequested bool) error {
 	}
 
 	for _, file := range files {
+		klog.Infof("file====%s",file)
 		if !strings.HasSuffix(file, ".go") {
 			continue
 		}
@@ -389,6 +402,7 @@ func (b *Builder) importPackage(dir string, userRequested bool) (*tc.Package, er
 	// done, or are in the queue to be done later, but it will short-circuit,
 	// and we can't miss pkgs that are only depended on.
 	pkg, err := b.typeCheckPackage(pkgPath)
+	klog.Infof("typeCheckPackage==%+v==%s",pkgPath,err)
 	if err != nil {
 		switch {
 		case ignoreError && pkg != nil:
